@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deal Dashboard · รายการโอน</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#F2F2F7;--surface:#FFF;--surface2:#EFEFEF;--surface3:#E5E5EA;
+      --border:rgba(0,0,0,.08);--text:#0A0A0A;--text2:#636366;--text3:#AEAEB2;
+      --red:#B31B1B;--rs:rgba(179,27,27,.07);--rm:rgba(179,27,27,.14);--rb:rgba(179,27,27,.25);
+      --green:#1C7A4A;--gbg:rgba(28,122,74,.08);
+      --blue:#0A68D4;--bbg:rgba(10,104,212,.07);
+      --amber:#C07000;--abg:rgba(192,112,0,.07);
+      --purple:#6B3DC5;--pbg:rgba(107,61,197,.07);
+      --sh-sm:0 1px 8px rgba(0,0,0,.06),0 4px 20px rgba(0,0,0,.04);
+      --sh-md:0 4px 16px rgba(0,0,0,.09),0 8px 32px rgba(0,0,0,.05);
+      --r-sm:10px;--r-md:16px;--r-lg:20px;--r-xl:26px;--rpill:100px;
+      --font:'IBM Plex Sans Thai',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.55;min-height:100vh}
+    .ico{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .ico svg{display:block}
+
+    /* HEADER */
+    .header{background:rgba(242,242,247,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);height:58px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-mark{width:34px;height:34px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+    .logo-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+    .logo-name span{color:var(--red)}
+    .hright{display:flex;align-items:center;gap:8px}
+    .live-pill{display:flex;align-items:center;gap:5px;background:var(--gbg);border-radius:var(--rpill);padding:5px 11px;font-size:11px;font-weight:700;color:var(--green)}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s ease infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+    .hpill{background:var(--surface2);border-radius:var(--rpill);padding:5px 12px;font-size:11px;color:var(--text2);font-weight:500}
+    .icon-btn{width:36px;height:36px;border-radius:10px;border:none;background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .18s}
+    .icon-btn:hover{background:var(--red);color:#fff;transform:scale(1.04)}
+    .icon-btn:active{transform:scale(.97)}
+
+    /* CYCLE BANNER */
+    .cycle-bar{background:var(--red);padding:10px 24px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .cycle-left{display:flex;align-items:center;gap:10px;color:#fff;flex-wrap:wrap}
+    .cycle-name{font-size:13px;font-weight:700;letter-spacing:-.1px}
+    .cycle-dates{font-size:12px;opacity:.82}
+    .cycle-right{display:flex;align-items:center;gap:10px}
+    .days-pill{background:rgba(255,255,255,.18);border-radius:var(--rpill);padding:4px 12px;font-size:12px;font-weight:600;color:#fff}
+    .progress-wrap{display:flex;align-items:center;gap:8px}
+    .progress-bar{width:110px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);overflow:hidden}
+    .progress-fill{height:100%;border-radius:2px;background:#fff;transition:width .6s ease}
+    .progress-pct{font-size:11px;color:rgba(255,255,255,.8);font-weight:600;min-width:28px}
+    /* Cycle dropdown */
+    .cy-sel{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);border-radius:var(--rpill);padding:5px 14px;font-family:var(--font);font-size:13px;font-weight:700;color:#fff;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;min-width:140px}
+    .cy-sel option{background:#8B0000;color:#fff;font-weight:600}
+    .cy-sel:focus{border-color:#fff}
+    /* Person picker dropdowns */
+    .sel-full{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;cursor:pointer;transition:border-color .2s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23AEAEB2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+    .sel-full:focus{border-color:var(--red);background-color:var(--surface)}
+    /* Compare tags */
+    .cmp-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:8px}
+    .cmp-tag{display:inline-flex;align-items:center;gap:5px;background:var(--rs);border:1.5px solid var(--rb);border-radius:var(--rpill);padding:5px 10px 5px 13px;font-size:12px;font-weight:600;color:var(--red)}
+    .cmp-tag-x{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1;margin-left:1px;opacity:.7}
+    .cmp-tag-x:hover{opacity:1}
+
+    /* TABS */
+    .tab-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:4px}
+    .tab-btn{display:flex;align-items:center;gap:7px;padding:14px 16px;border:none;background:transparent;font-family:var(--font);font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;white-space:nowrap}
+    .tab-btn:hover{color:var(--text)}
+    .tab-btn.active{color:var(--red);border-bottom-color:var(--red)}
+    .tab-btn .ico{opacity:.6;transition:opacity .18s}
+    .tab-btn.active .ico,.tab-btn:hover .ico{opacity:1}
+
+    /* MAIN */
+    .tab-content{display:none;padding:22px 24px;max-width:1560px;margin:0 auto}
+    .tab-content.active{display:block}
+
+    /* STATE */
+    .state-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;gap:13px}
+    .spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--surface3);border-top-color:var(--red);animation:spin .75s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .state-title{font-size:16px;font-weight:600}
+    .state-sub{font-size:13px;color:var(--text2);text-align:center;max-width:340px}
+
+    /* SECTION LABEL */
+    .sec-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px}
+
+    /* KPI CARDS */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:22px}
+    .kpi{background:var(--surface);border-radius:var(--r-lg);padding:17px 18px;box-shadow:var(--sh-sm);border:1px solid var(--border);transition:transform .15s,box-shadow .15s}
+    .kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
+    .kpi-icon-wrap{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+    .kpi-val{font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1.15}
+    .kpi-lbl{font-size:12px;color:var(--text2);margin-top:3px;font-weight:500}
+
+    /* CHARTS */
+    .charts-row{display:grid;grid-template-columns:1.35fr 1fr;gap:11px;margin-bottom:22px}
+    @media(max-width:860px){.charts-row{grid-template-columns:1fr}}
+    .chart-card{background:var(--surface);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm);border:1px solid var(--border)}
+    .chart-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+    .chart-ttl{font-size:14px;font-weight:600;line-height:1.3}
+    .chart-sub{font-size:11px;color:var(--text2);margin-top:2px}
+    .chart-body{position:relative;height:218px}
+
+    /* FILTER */
+    .filter-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--border);padding:16px 18px;margin-bottom:11px}
+    .filter-row1{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .search-wrap{flex:1;position:relative}
+    .search-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;align-items:center}
+    .search-inp{width:100%;background:var(--bg);border:1.5px solid transparent;border-radius:var(--rpill);padding:9px 40px 9px 40px;font-family:var(--font);font-size:14px;color:var(--text);transition:border-color .2s,background .2s;outline:none}
+    .search-inp:focus{border-color:var(--red);background:var(--surface)}
+    .search-inp::placeholder{color:var(--text3)}
+    .search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--text3);color:#fff;border:none;border-radius:50%;width:17px;height:17px;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;line-height:1}
+    .row-badge{display:flex;align-items:center;gap:6px;background:var(--rs);border:1.5px solid var(--rb);border-radius:var(--rpill);padding:6px 13px;white-space:nowrap}
+    .row-badge-lbl{font-size:11px;font-weight:700;color:var(--red)}
+    .row-inp{width:52px;background:transparent;border:none;outline:none;font-family:var(--font);font-size:14px;font-weight:700;color:var(--red);text-align:center}
+    .row-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+    .chips-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+    .chips-row{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rpill);padding:5px 13px;font-family:var(--font);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;user-select:none}
+    .chip:hover{border-color:var(--red);color:var(--red);background:var(--rs)}
+    .chip.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+
+    /* TABLE */
+    .tbl-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--border);overflow:hidden}
+    .tbl-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .tbl-head-left{display:flex;align-items:center;gap:9px}
+    .tbl-title{font-size:14px;font-weight:700}
+    .cnt-pill{background:var(--rs);border-radius:var(--rpill);padding:2px 9px;font-size:11px;font-weight:700;color:var(--red)}
+    .tbl-scroll{overflow-x:auto;max-height:460px;overflow-y:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead{position:sticky;top:0;z-index:5}
+    th{background:var(--bg);color:var(--text2);font-weight:600;padding:9px 13px;font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;text-align:left}
+    th:hover{color:var(--red)}
+    th.asc::after{content:' ↑';color:var(--red)}
+    th.desc::after{content:' ↓';color:var(--red)}
+    td{padding:8px 13px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--rs)}
+    .td-idx{color:var(--text3);font-size:11px;text-align:right}
+    .td-amt{color:var(--green);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+    .no-data{text-align:center;padding:48px;color:var(--text2)}
+
+    /* PERSONAL TAB */
+    .person-empty{display:flex;flex-direction:column;align-items:center;padding:50px 24px;gap:14px;color:var(--text2)}
+    .person-empty-icon{width:60px;height:60px;border-radius:18px;background:var(--rs);display:flex;align-items:center;justify-content:center;color:var(--red)}
+    .person-empty-title{font-size:16px;font-weight:600;color:var(--text)}
+    .person-empty-sub{font-size:13px;text-align:center;max-width:300px;line-height:1.6}
+    .picker-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--border);padding:20px}
+    .picker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .picker-lbl{font-size:13px;font-weight:700;color:var(--text)}
+    .compare-toggle{display:flex;align-items:center;gap:7px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rpill);padding:5px 14px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s}
+    .compare-toggle:hover,.compare-toggle.active{background:var(--red);border-color:var(--red);color:#fff}
+    .compare-hint{font-size:11px;color:var(--text2);margin-top:8px}
+
+    /* hero card */
+    .hero-card{background:linear-gradient(135deg,var(--red) 0%,#8B0000 100%);border-radius:var(--r-xl);padding:24px 26px;margin-bottom:16px;box-shadow:0 4px 24px rgba(179,27,27,.3);color:#fff;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .hero-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);border-radius:var(--rpill);padding:3px 10px;font-size:11px;font-weight:600;margin-bottom:10px}
+    .hero-name{font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1.1;margin-bottom:4px}
+    .hero-cycle{font-size:13px;opacity:.8}
+    .hero-right{text-align:right}
+    .hero-amt-lbl{font-size:11px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+    .hero-amt{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1.1}
+    .hero-rank{display:inline-flex;align-items:center;gap:5px;margin-top:6px;background:rgba(255,255,255,.15);border-radius:var(--rpill);padding:4px 12px;font-size:12px;font-weight:600}
+
+    /* leaderboard */
+    .lb-list{display:flex;flex-direction:column}
+    .lb-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background .12s}
+    .lb-row:last-child{border-bottom:none}
+    .lb-row:hover{background:var(--bg)}
+    .lb-row.me{background:var(--rs)!important}
+    .lb-rank{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;background:var(--bg);color:var(--text2)}
+    .lb-rank.r1{background:#FFD700;color:#7A5800}
+    .lb-rank.r2{background:#C0C0C0;color:#666}
+    .lb-rank.r3{background:#CD7F32;color:#5A3000}
+    .lb-name{flex:1;font-size:13px;font-weight:500}
+    .lb-name.me-name{font-weight:700;color:var(--red)}
+    .lb-amt{font-size:13px;font-weight:700;color:var(--green)}
+    .lb-bar-wrap{width:70px;height:4px;border-radius:2px;background:var(--surface3)}
+    .lb-bar{height:100%;border-radius:2px;background:var(--rm)}
+    .lb-bar.me-bar{background:var(--red)}
+
+    /* COMPARISON */
+    .cmp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+    .cmp-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:2px solid var(--border);overflow:hidden;transition:transform .15s}
+    .cmp-card:hover{transform:translateY(-2px)}
+    .cmp-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+    .cmp-name{font-size:15px;font-weight:700}
+    .cmp-rank-badge{border-radius:var(--rpill);padding:3px 10px;font-size:11px;font-weight:700}
+    .cmp-body{padding:0 16px 16px}
+    .cmp-total{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+    .cmp-total-lbl{font-size:11px;color:var(--text2);margin-bottom:10px}
+    .cmp-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .cmp-stat{background:var(--bg);border-radius:var(--r-sm);padding:8px 10px}
+    .cmp-stat-val{font-size:14px;font-weight:700}
+    .cmp-stat-lbl{font-size:10px;color:var(--text2);margin-top:2px}
+    .cmp-remove{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:2px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color .15s}
+    .cmp-remove:hover{color:var(--red)}
+
+    /* COLOR PALETTE for comparison */
+    .p0{--pc:#B31B1B;--ps:rgba(179,27,27,.08)}.p1{--pc:#0A68D4;--ps:rgba(10,104,212,.08)}
+    .p2{--pc:#1C7A4A;--ps:rgba(28,122,74,.08)}.p3{--pc:#C07000;--ps:rgba(192,112,0,.08)}
+    .p4{--pc:#6B3DC5;--ps:rgba(107,61,197,.08)}.p5{--pc:#0891B2;--ps:rgba(8,145,178,.08)}
+    .cmp-card{border-color:var(--pc)!important;}.cmp-header{background:var(--ps)}
+    .cmp-name{color:var(--pc)}.cmp-total{color:var(--pc)}
+    .cmp-rank-badge{background:var(--ps);color:var(--pc)}
+
+    /* MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(5px);z-index:500;display:none;align-items:flex-end;justify-content:center}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-width:540px;padding:20px;animation:slideUp .22s cubic-bezier(.4,0,.2,1)}
+    @keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}
+    .modal-handle{width:38px;height:4px;border-radius:2px;background:var(--surface3);margin:0 auto 16px}
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:16px}
+    .modal-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+    .modal-row:last-of-type{border-bottom:none}
+    .modal-key{font-size:14px;font-weight:500}
+    .modal-hint{font-size:11px;color:var(--text2);margin-top:2px}
+    .modal-sel{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;font-family:var(--font);font-size:13px;color:var(--text);cursor:pointer;outline:none;max-width:175px}
+    .modal-sel:focus{border-color:var(--red)}
+    .modal-done{width:100%;margin-top:14px;padding:13px;border:none;background:var(--red);color:#fff;border-radius:var(--r-md);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .modal-done:hover{opacity:.88}
+    .btn-ghost{padding:7px 14px;border:1.5px solid var(--border);background:transparent;color:var(--text2);border-radius:var(--rpill);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+    .btn-ghost:hover{border-color:var(--red);color:var(--red)}
+    .btn-red{padding:9px 18px;border:none;background:var(--red);color:#fff;border-radius:var(--rpill);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .btn-red:hover{opacity:.88}
+  </style>
+</head>
+<body>
+<!-- SVG ICONS -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="ico-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+  <symbol id="ico-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 22c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+  <symbol id="ico-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="7" r="3.5"/><path d="M2 21c0-3.9 3.1-7 7-7"/><circle cx="17" cy="7" r="3.5"/><path d="M22 21c0-3.9-3.1-7-7-7"/><path d="M9 14c2.2-1 5.8-1 8 0"/></symbol>
+  <symbol id="ico-money" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
+  <symbol id="ico-chart-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,17 8,11 13,14 21,6"/><polyline points="17,6 21,6 21,10"/></symbol>
+  <symbol id="ico-chart-bar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="12" width="4" height="9" rx="1.5"/><rect x="10" y="7" width="4" height="14" rx="1.5"/><rect x="17" y="3" width="4" height="18" rx="1.5"/></symbol>
+  <symbol id="ico-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="ico-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7.5"/><path d="M16.5 16.5 21.5 21.5"/></symbol>
+  <symbol id="ico-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="ico-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9c-2.39 0-4.68.94-6.36 2.64L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="ico-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></symbol>
+  <symbol id="ico-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 2h12v9a6 6 0 0 1-12 0V2z"/><path d="M6 7H3a2 2 0 0 1-2-2V4h5M18 7h3a2 2 0 0 0 2-2V4h-5"/><path d="M12 17v4M8 21h8"/></symbol>
+  <symbol id="ico-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="ico-avg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 5h16L12 12l8 7H4"/></symbol>
+  <symbol id="ico-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="ico-medal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="14" r="7"/><path d="M12 7V3M9 3h6"/><path d="M9 3l-2 4M15 3l2 4"/></symbol>
+  <symbol id="ico-compare" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H3v7h7V3zM21 3h-7v7h7V3zM10 14H3v7h7v-7zM21 14h-7v7h7v-7z"/><path d="M14 6.5h-4M14 17.5h-4"/></symbol>
+  <symbol id="ico-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+</svg>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,17 8,11 13,14 21,6"/></svg></div>
+    <div><div class="logo-name"><span>Deal</span> Dashboard</div></div>
+  </div>
+  <div class="hright">
+    <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+    <div class="hpill" id="timerPill">30 วิ</div>
+    <div class="hpill" id="tsPill" style="display:none"></div>
+    <button class="icon-btn" onclick="forceRefresh()"><svg width="16" height="16"><use href="#ico-refresh"/></svg></button>
+    <button class="icon-btn" onclick="openModal()"><svg width="16" height="16"><use href="#ico-settings"/></svg></button>
+  </div>
+</header>
+
+<!-- CYCLE BANNER -->
+<div class="cycle-bar" id="cycleBanner"></div>
+
+<!-- TABS -->
+<div class="tab-strip">
+  <button class="tab-btn active" onclick="switchTab('overview',this)">
+    <span class="ico"><svg width="15" height="15"><use href="#ico-grid"/></svg></span>Overview
+  </button>
+  <button class="tab-btn" onclick="switchTab('personal',this)">
+    <span class="ico"><svg width="15" height="15"><use href="#ico-users"/></svg></span>Sales รายบุคคล
+  </button>
+</div>
+
+<!-- STATE -->
+<div id="stateBox" class="state-wrap">
+  <div class="spinner"></div>
+  <div class="state-title">กำลังโหลดข้อมูลทั้งหมด…</div>
+  <div class="state-sub">โหลดทุก row เพื่อดูย้อนหลังได้ครบ</div>
+</div>
+
+<!-- TAB: OVERVIEW -->
+<div id="tab-overview" class="tab-content" style="display:none">
+  <div class="sec-lbl" id="ovTitle">Overview</div>
+  <div class="kpi-grid" id="kpiGrid"></div>
+  <div class="sec-lbl">Analytics</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-card-head">
+        <div><div class="chart-ttl">ยอดโอนรายวัน</div><div class="chart-sub" id="cDateRange">—</div></div>
+        <span class="ico" style="color:var(--text3)"><svg width="16" height="16"><use href="#ico-chart-line"/></svg></span>
+      </div>
+      <div class="chart-body"><canvas id="cDaily"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-head">
+        <div><div class="chart-ttl">ยอดแต่ละเซลล์</div><div class="chart-sub">เรียงจากมากไปน้อย</div></div>
+        <span class="ico" style="color:var(--text3)"><svg width="16" height="16"><use href="#ico-chart-bar"/></svg></span>
+      </div>
+      <div class="chart-body"><canvas id="cPerson"></canvas></div>
+    </div>
+  </div>
+  <div class="sec-lbl">รายการ</div>
+  <div class="filter-card">
+    <div class="filter-row1">
+      <div class="search-wrap">
+        <span class="search-ico"><svg width="15" height="15"><use href="#ico-search"/></svg></span>
+        <input class="search-inp" id="searchQ" placeholder="ค้นหารายการ…" oninput="applyFilter();toggleClear()"/>
+        <button class="search-clear" id="clearBtn" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="row-badge" title="แสดงตั้งแต่ row นี้ในแท็บ Overview">
+        <span class="ico" style="color:var(--red)"><svg width="13" height="13"><use href="#ico-pin"/></svg></span>
+        <span class="row-badge-lbl">Row</span>
+        <input class="row-inp" id="rowInp" type="number" value="164" min="1" onchange="START_ROW=parseInt(this.value)||1;applyFilter()"/>
+      </div>
+    </div>
+    <div id="chipsSection" style="display:none">
+      <div class="chips-lbl">กรองตามเซลล์</div>
+      <div class="chips-row" id="chipsWrap"></div>
+    </div>
+  </div>
+  <div class="tbl-card">
+    <div class="tbl-head">
+      <div class="tbl-head-left">
+        <span class="ico" style="color:var(--text2)"><svg width="15" height="15"><use href="#ico-list"/></svg></span>
+        <span class="tbl-title">รายการ</span>
+        <span class="cnt-pill" id="rowCount">0 รายการ</span>
+      </div>
+    </div>
+    <div class="tbl-scroll"><table><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- TAB: PERSONAL -->
+<div id="tab-personal" class="tab-content" style="display:none">
+  <!-- picker -->
+  <div id="personalEmpty">
+    <div class="person-empty">
+      <div class="person-empty-icon"><svg width="28" height="28"><use href="#ico-users"/></svg></div>
+      <div class="person-empty-title">เลือกเซลล์ที่ต้องการดู</div>
+      <div class="person-empty-sub">ดูยอดส่วนตัวในรอบที่เลือก หรือเปรียบเทียบหลายคนพร้อมกัน</div>
+    </div>
+    <div class="picker-card">
+      <div class="picker-header">
+        <span class="picker-lbl">เลือกเซลล์</span>
+        <button class="compare-toggle" id="cmpToggle" onclick="toggleCompare()">
+          <svg width="13" height="13"><use href="#ico-compare"/></svg>
+          เปรียบเทียบ
+        </button>
+      </div>
+      <!-- Normal: single person dropdown -->
+      <div id="singlePickRow">
+        <select id="personSelect" class="sel-full" onchange="if(this.value)selectViewPerson(this.value)">
+          <option value="">— เลือกเซลล์ที่ต้องการดู —</option>
+        </select>
+      </div>
+      <!-- Compare: add-people UI -->
+      <div id="multiPickRow" style="display:none">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="cmpAddSel" class="sel-full">
+            <option value="">— เพิ่มเซลล์เพื่อเปรียบเทียบ —</option>
+          </select>
+          <button class="btn-red" style="white-space:nowrap;padding:9px 16px" onclick="addToCmpList()">+ เพิ่ม</button>
+        </div>
+        <div class="cmp-tags-row" id="cmpTagsList"></div>
+        <div style="margin-top:14px;display:none" id="cmpActionRow">
+          <button class="btn-red" onclick="showCompare()">ดูผลเปรียบเทียบ →</button>
+          <button class="btn-ghost" style="margin-left:8px" onclick="clearCompare()">ล้างทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- compare view -->
+  <div id="compareView" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:16px;font-weight:700">เปรียบเทียบ Sales</div>
+        <div style="font-size:12px;color:var(--text2)" id="cmpCycleLbl"></div>
+      </div>
+      <button class="btn-ghost" onclick="backToPicker()">← กลับ</button>
+    </div>
+    <div class="cmp-grid" id="cmpGrid"></div>
+    <div class="chart-card" style="margin-bottom:18px">
+      <div class="chart-card-head">
+        <div><div class="chart-ttl">ยอดรายวัน (เปรียบเทียบ)</div><div class="chart-sub" id="cmpChartSub"></div></div>
+      </div>
+      <div class="chart-body" style="height:250px"><canvas id="cCmp"></canvas></div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-head"><div class="tbl-head-left"><span class="tbl-title">สรุปเปรียบเทียบ</span></div></div>
+      <div class="tbl-scroll"><table><thead id="cmpTHead"></thead><tbody id="cmpTBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- personal view -->
+  <div id="personalView" style="display:none">
+    <div id="heroCard" class="hero-card"></div>
+    <div class="kpi-grid" id="pkpiGrid"></div>
+    <div class="charts-row" style="margin-bottom:18px">
+      <div class="chart-card">
+        <div class="chart-card-head"><div><div class="chart-ttl" id="pChartTitle">ยอดรายวัน</div><div class="chart-sub" id="pChartSub"></div></div></div>
+        <div class="chart-body"><canvas id="cPersonal"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head"><div><div class="chart-ttl">Leaderboard</div><div class="chart-sub" id="lbSub"></div></div></div>
+        <div class="lb-list" id="lbList" style="max-height:260px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-head">
+        <div class="tbl-head-left"><span class="tbl-title" id="pTblTitle">รายการ</span><span class="cnt-pill" id="pRowCount">0</span></div>
+        <button class="btn-ghost" onclick="deselectPerson()">← กลับ</button>
+      </div>
+      <div class="tbl-scroll"><table><thead id="pTHead"></thead><tbody id="pTBody"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">ตั้งค่าคอลัมน์</div>
+    <div class="modal-row"><div><div class="modal-key">คอลัมน์วันที่</div><div class="modal-hint">ใช้กรองรอบเดือน</div></div><select class="modal-sel" id="colDate" onchange="renderAll()"></select></div>
+    <div class="modal-row"><div><div class="modal-key">คอลัมน์ยอดเงิน</div><div class="modal-hint">ใช้คำนวณยอดรวม</div></div><select class="modal-sel" id="colAmount" onchange="renderAll()"></select></div>
+    <div class="modal-row"><div><div class="modal-key">คอลัมน์เซลล์/บุคคล</div><div class="modal-hint">ใช้ Filter &amp; Leaderboard</div></div><select class="modal-sel" id="colPerson" onchange="renderAll()"></select></div>
+    <div class="modal-row"><div><div class="modal-key">คอลัมน์ประเภท</div><div class="modal-hint">optional</div></div><select class="modal-sel" id="colCat" onchange="renderAll()"></select></div>
+    <button class="modal-done" onclick="closeModal()">เสร็จแล้ว</button>
+  </div>
+</div>
+
+<script>
+/* ── CONFIG ── */
+const SHEET_ID='18MaayIO79_YO-d_hU4HUp9bi27FCdb1-d0AYDgfqalE', GID='402526614';
+let START_ROW=164;
+const REFRESH=30_000;
+const CYCLE_NAMES=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const CMP_COLORS=['#B31B1B','#0A68D4','#1C7A4A','#C07000','#6B3DC5','#0891B2'];
+
+/* ── STATE ── */
+let allRows=[], headers=[], filteredRows=[];
+let chDay=null, chPer=null, chPersonal=null, chCmp=null;
+let sortSt={col:null,dir:1};
+let selectedCycle=null, selectedPerson='', viewingPerson='';
+let compareMode=false, compareList=[];
+let timerID, countID, cd=30;
+
+/* ── CYCLE ── */
+function makeCycle(ey,em){
+  let sm=em-1,sy=ey; if(sm<0){sm=11;sy--;}
+  const cs=new Date(sy,sm,26), ce=new Date(ey,em,25,23,59,59);
+  const fd=d=>`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
+  const now=new Date(), tot=(ce-cs)/864e5, el=(now-cs)/864e5;
+  return{cycleStart:cs,cycleEnd:ce,
+    cycleName:`รอบ${CYCLE_NAMES[em]} ${ey+543}`,shortName:`${CYCLE_NAMES[em]} ${ey+543}`,
+    fmtDate:fd,total:tot,pct:Math.min(100,Math.max(0,el/tot*100)),
+    daysLeft:Math.max(0,Math.ceil((ce-now)/864e5)),label:`${fd(cs)} – ${fd(ce)}`};
+}
+function getCurrentCycle(){
+  const now=new Date(),day=now.getDate(),m=now.getMonth(),y=now.getFullYear();
+  let em=m+(day>=26?1:0),ey=y; if(em>11){em=0;ey++;}
+  return makeCycle(ey,em);
+}
+function getActiveCycle(){return selectedCycle||getCurrentCycle();}
+function buildCycleList(count=8){
+  const now=new Date(),day=now.getDate();
+  let curEm=now.getMonth()+(day>=26?1:0),curEy=now.getFullYear();
+  if(curEm>11){curEm=0;curEy++;}
+  const out=[];
+  for(let i=count-1;i>=0;i--){const d=new Date(curEy,curEm-i,1);out.push(makeCycle(d.getFullYear(),d.getMonth()));}
+  return out;
+}
+function selectCycle(idx,list){
+  const curRef=getCurrentCycle(), chosen=list[idx];
+  const isCur=chosen.cycleStart.getTime()===curRef.cycleStart.getTime();
+  selectedCycle=isCur?null:chosen;
+  renderCycleBanner(); renderAll();
+}
+function renderCycleBanner(){
+  const list=buildCycleList(8); const cy=getActiveCycle();
+  const curRef=getCurrentCycle(); const now=new Date();
+  window._cyList=list;
+  // Build dropdown options
+  const opts=list.map((c,i)=>{
+    const isActive=cy.cycleStart.getTime()===c.cycleStart.getTime();
+    const isCur=c.cycleStart.getTime()===curRef.cycleStart.getTime();
+    return`<option value="${i}"${isActive?' selected':''}>${c.shortName}${isCur?' ●':''} · ${c.label}</option>`;
+  }).join('');
+  const isPast=cy.cycleEnd<now;
+  const pill=isPast?`<div class="days-pill">ปิดรอบแล้ว</div>`:selectedCycle===null?`<div class="days-pill">เหลือ ${cy.daysLeft} วัน</div>`:`<div class="days-pill">ดูย้อนหลัง</div>`;
+  const bar=!isPast&&!selectedCycle?`<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${cy.pct}%"></div></div><span class="progress-pct">${Math.round(cy.pct)}%</span></div>`:'';
+  document.getElementById('cycleBanner').innerHTML=`
+    <div class="cycle-left">
+      <svg width="14" height="14" style="opacity:.85;flex-shrink:0"><use href="#ico-cal"/></svg>
+      <select class="cy-sel" onchange="selectCycle(+this.value,_cyList)">${opts}</select>
+    </div>
+    <div class="cycle-right">${pill}${bar}</div>`;
+}
+
+/* ── DATE ── */
+function tryParseDate(str){
+  if(!str)return null; str=String(str).trim(); let m;
+  m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/); if(m)return new Date(+m[3]+1957,+m[2]-1,+m[1]);
+  m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if(m){let y=+m[3];if(y>2500)y-=543;return new Date(y,+m[2]-1,+m[1]);}
+  m=str.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  return null;
+}
+function isInCycle(row,dc,cy){
+  if(!dc) return true; // no date col → don't filter
+  const c=cy||getActiveCycle();
+  // 1. gviz stored raw Date object
+  const raw=row['_dt_'+dc];
+  if(raw) return raw>=c.cycleStart&&raw<=c.cycleEnd;
+  // 2. fallback: parse string value
+  const val=row[dc];
+  if(val===null||val===undefined||val==='') return false;
+  const p=tryParseDate(String(val));
+  if(p) return p>=c.cycleStart&&p<=c.cycleEnd;
+  return false;
+}
+
+/* ── JSONP ── */
+function gvizFetch(range,hdr){
+  return new Promise((resolve,reject)=>{
+    const cb='_g'+Date.now()+Math.random().toString(36).slice(2,6);
+    const el=document.createElement('script');
+    const to=setTimeout(()=>{cleanup();reject(new Error('Timeout'));},25000);
+    const cleanup=()=>{clearTimeout(to);delete window[cb];el.remove();};
+    window[cb]=d=>{cleanup();resolve(d);};
+    el.onerror=()=>{cleanup();reject(new Error('Network error'));};
+    el.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent('out:json;responseHandler:'+cb)}&gid=${GID}&range=${encodeURIComponent(range)}&headers=${hdr}`;
+    document.head.appendChild(el);
+  });
+}
+
+/* ── LOAD (ALL rows) ── */
+async function loadData(){
+  try{
+    if(!allRows.length)showState('loading');
+    // Load EVERYTHING with row1 as header — needed for historical cycles
+    const res=await gvizFetch('A1:Z',1);
+    headers=(res.table.cols||[]).map((c,i)=>(c.label&&c.label.trim())?c.label.trim():`Col${i+1}`);
+    allRows=(res.table.rows||[]).map((row,ri)=>{
+      const obj={_rowNum:ri+2};
+      headers.forEach((hh,i)=>{
+        const cell=row.c?.[i]; let v=cell?.v??null;
+        if(typeof v==='string'&&v.startsWith('Date(')){
+          // Match Date(y,m,d) OR Date(y,m,d,h,min) OR Date(y,m,d,h,min,s) — gviz datetime has 5-6 params
+          const m=v.match(/Date\((\d+),(\d+),(\d+)/);
+          if(m){const dt=new Date(+m[1],+m[2],+m[3]);obj['_dt_'+hh]=dt;
+            v=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()+543}`;}
+        }
+        obj[hh]=v;
+      });
+      return obj;
+    }).filter(r=>Object.values(r).some(v=>v!==null&&v!==''));
+    headers=headers.filter(hh=>allRows.some(r=>r[hh]!==null&&r[hh]!==''&&r[hh]!==undefined));
+    initCols(); showState('ready'); renderAll(); updateTs(); resetCd();
+  }catch(e){console.error(e);showState('error',e.message);}
+}
+
+/* ── getDisplayRows: cycle-filtered rows for overview ── */
+function getDisplayRows(){
+  const dc=gc('colDate');
+  // If we have a date column, always filter purely by the active cycle (current or selected)
+  if(dc) return allRows.filter(r=>isInCycle(r,dc));
+  // No date column detected: show rows from START_ROW onward as fallback
+  return allRows.filter(r=>r._rowNum>=START_ROW);
+}
+
+/* ── COLUMNS ── */
+function initCols(){
+  const opt='<option value="">— ไม่ระบุ —</option>'+headers.map(h=>`<option value="${ex(h)}">${h}</option>`).join('');
+  ['colDate','colAmount','colPerson','colCat'].forEach(id=>{
+    const prev=document.getElementById(id).value;
+    document.getElementById(id).innerHTML=opt;
+    if(prev&&headers.includes(prev))document.getElementById(id).value=prev;
+  });
+  const kw=kws=>headers.find(h=>kws.some(k=>h.toLowerCase().includes(k)))||'';
+
+  // ── CYCLE DATE: ใช้ _dt_ key แรกสุด (= timestamp ที่ submit / บันทึกข้อมูล)
+  // เพราะ Google Form sheet จะมี timestamp column แรก ซึ่งระบุว่า row นี้อยู่ใน cycle ไหน
+  // ไม่ใช่ "วันที่โอน" ซึ่งอาจข้ามรอบได้
+  if(!gc('colDate')){
+    // หา _dt_ key แรกสุดตามลำดับ column ใน sheet
+    const dtKey=headers.reduce((found,hh)=>found||(allRows.some(r=>r['_dt_'+hh])?hh:null),null);
+    if(dtKey) document.getElementById('colDate').value=dtKey;
+  }
+  // fallback: keyword match
+  if(!gc('colDate')) document.getElementById('colDate').value=kw(['วัน','date','เดือน','เวลา','วันที่']);
+  // last resort: value scan
+  if(!gc('colDate')){
+    for(const hh of headers){
+      const vals=allRows.slice(0,50).map(r=>r[hh]).filter(v=>v!==null&&v!==''&&v!==undefined);
+      if(vals.length<3)continue;
+      if(vals.filter(v=>tryParseDate(String(v))).length/vals.length>=0.6){document.getElementById('colDate').value=hh;break;}
+    }
+  }
+
+  // ── OTHER COLUMNS
+  if(!gc('colAmount')) document.getElementById('colAmount').value=kw(['ยอด','amount','เงิน','total','บาท','price','จำนวน']);
+  if(!gc('colPerson')) document.getElementById('colPerson').value=kw(['เซลล์','sale','คน','พนักงาน','ชื่อ','name','by','person']);
+  if(!gc('colCat'))    document.getElementById('colCat').value   =kw(['ประเภท','type','status','สถานะ']);
+}
+const gc=id=>document.getElementById(id)?.value||'';
+
+/* ── RENDER ALL ── */
+function renderAll(){
+  const cy=getActiveCycle();
+  document.getElementById('ovTitle').textContent=`Overview · ${cy.cycleName}`;
+  renderCycleBanner(); renderKPI(); renderCharts(); buildChips(); buildPersonPicker(); applyFilter();
+  if(viewingPerson)renderPersonal(viewingPerson);
+}
+
+/* ── KPI ── */
+function renderKPI(){
+  const rows=getDisplayRows(), ac=gc('colAmount'), pc=gc('colPerson');
+  const nums=ac?rows.map(r=>parseFloat(String(r[ac]??'').replace(/,/g,''))).filter(n=>!isNaN(n)&&n>0):[];
+  const tot=nums.reduce((s,n)=>s+n,0), avg=nums.length?tot/nums.length:0, mx=nums.length?Math.max(...nums):0;
+  const up=pc?[...new Set(rows.map(r=>r[pc]).filter(Boolean))].length:0;
+  const cs=[
+    {ico:'ico-list',   bg:'var(--bbg)',   clr:'var(--blue)',   val:rows.length.toLocaleString('th'),lbl:'จำนวนรายการ'},
+    {ico:'ico-money',  bg:'var(--gbg)',   clr:'var(--green)',  val:ac?'฿'+fmt(tot):'—',            lbl:'ยอดรวม'},
+    {ico:'ico-avg',    bg:'var(--abg)',   clr:'var(--amber)',  val:ac?'฿'+fmt(avg):'—',            lbl:'ยอดเฉลี่ย/รายการ'},
+    {ico:'ico-bolt',   bg:'var(--pbg)',   clr:'var(--purple)', val:ac?'฿'+fmt(mx):'—',             lbl:'ยอดสูงสุด'},
+    {ico:'ico-users',  bg:'var(--rs)',    clr:'var(--red)',    val:pc?String(up):'—',              lbl:'จำนวนเซลล์'},
+  ];
+  document.getElementById('kpiGrid').innerHTML=cs.map(c=>`<div class="kpi"><div class="kpi-icon-wrap" style="background:${c.bg};color:${c.clr}"><svg width="18" height="18"><use href="#${c.ico}"/></svg></div><div class="kpi-val">${c.val}</div><div class="kpi-lbl">${c.lbl}</div></div>`).join('');
+}
+
+/* ── CHARTS ── */
+const CO={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+function renderCharts(){renderDay();renderPer();}
+
+function renderDay(){
+  const rows=getDisplayRows(), dc=gc('colDate'), ac=gc('colAmount');
+  if(!dc||!ac){if(chDay){chDay.destroy();chDay=null;}return;}
+  const byD={}, dtMap={};
+  rows.forEach(r=>{let d=r[dc];if(!d)return;d=String(d).split('T')[0].substring(0,10);
+    const raw=r['_dt_'+dc]||tryParseDate(d); if(raw)dtMap[d]=raw.getTime();
+    const n=parseFloat(String(r[ac]??'').replace(/,/g,''));if(!isNaN(n))byD[d]=(byD[d]||0)+n;});
+  const labels=Object.keys(byD).sort((a,b)=>(dtMap[a]||0)-(dtMap[b]||0)), data=labels.map(l=>byD[l]);
+  document.getElementById('cDateRange').textContent=labels.length?`${labels[0]} – ${labels[labels.length-1]}`:'';
+  const ctx=document.getElementById('cDaily').getContext('2d');
+  if(chDay)chDay.destroy();
+  chDay=new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#B31B1B',backgroundColor:'rgba(179,27,27,.07)',fill:true,tension:.38,pointRadius:4,pointBackgroundColor:'#B31B1B',pointBorderColor:'#fff',pointBorderWidth:2}]},
+    options:{...CO,plugins:{...CO.plugins,tooltip:{callbacks:{label:c=>' ฿'+fmt(c.parsed.y)}}},
+    scales:{x:{ticks:{color:'#9a9a9a',maxRotation:40,font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}},y:{ticks:{color:'#9a9a9a',callback:v=>'฿'+fmt(v),font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}}}}});
+}
+function renderPer(){
+  const rows=getDisplayRows(), pc=gc('colPerson'), ac=gc('colAmount');
+  if(!pc||!ac){if(chPer){chPer.destroy();chPer=null;}return;}
+  const byP={};
+  rows.forEach(r=>{const p=r[pc]?String(r[pc]).trim():'(ไม่ระบุ)';const n=parseFloat(String(r[ac]??'').replace(/,/g,''));if(!isNaN(n))byP[p]=(byP[p]||0)+n;});
+  const sorted=Object.entries(byP).sort((a,b)=>b[1]-a[1]);
+  const ctx=document.getElementById('cPerson').getContext('2d');
+  if(chPer)chPer.destroy();
+  chPer=new Chart(ctx,{type:'bar',data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:'rgba(179,27,27,.72)',borderColor:'#B31B1B',borderWidth:1.5,borderRadius:6}]},
+    options:{...CO,indexAxis:'y',plugins:{...CO.plugins,tooltip:{callbacks:{label:c=>' ฿'+fmt(c.parsed.x)}}},
+    scales:{x:{ticks:{color:'#9a9a9a',callback:v=>'฿'+fmt(v),font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}},y:{ticks:{color:'#333',font:{family:'IBM Plex Sans Thai',size:12}},grid:{display:false}}}}});
+}
+
+/* ── CHIPS (overview) ── */
+function buildChips(){
+  const pc=gc('colPerson'), sec=document.getElementById('chipsSection');
+  if(!pc){sec.style.display='none';return;}
+  const rows=getDisplayRows();
+  const ps=[...new Set(rows.map(r=>r[pc]).filter(Boolean))].sort();
+  if(!ps.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('chipsWrap').innerHTML=`<div class="chip active" onclick="selectChip(this,'')">ทั้งหมด</div>`+ps.map(p=>`<div class="chip${selectedPerson===p?' active':''}" onclick="selectChip(this,'${ex(p)}')">${p}</div>`).join('');
+}
+function selectChip(el,val){selectedPerson=val;document.querySelectorAll('#chipsWrap .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');applyFilter();}
+
+/* ── FILTER (overview) ── */
+function applyFilter(){
+  const q=document.getElementById('searchQ').value.toLowerCase().trim();
+  const pc=gc('colPerson');
+  const base=getDisplayRows();
+  filteredRows=base.filter(r=>{
+    if(selectedPerson&&pc&&String(r[pc]??'').trim()!==selectedPerson)return false;
+    if(q&&!Object.values(r).join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  if(sortSt.col){
+    filteredRows.sort((a,b)=>{
+      const av=a[sortSt.col],bv=b[sortSt.col];
+      const an=parseFloat(String(av??'').replace(/,/g,'')),bn=parseFloat(String(bv??'').replace(/,/g,''));
+      if(!isNaN(an)&&!isNaN(bn))return(an-bn)*sortSt.dir;
+      return String(av??'').localeCompare(String(bv??''),'th')*sortSt.dir;
+    });
+  }
+  renderTbl();
+}
+function clearSearch(){document.getElementById('searchQ').value='';applyFilter();toggleClear();}
+function toggleClear(){document.getElementById('clearBtn').style.display=document.getElementById('searchQ').value?'flex':'none';}
+
+/* ── TABLE (overview) ── */
+function renderTbl(){
+  const ac=gc('colAmount'), LIMIT=500, rows=filteredRows.slice(0,LIMIT);
+  document.getElementById('tHead').innerHTML='<tr>'+['#',...headers].map((h,i)=>{
+    let cls='';if(h===sortSt.col)cls=sortSt.dir===1?'asc':'desc';
+    return`<th class="${cls}"${i===0?'':` onclick="sortBy('${ex(h)}')"` }>${h}</th>`;
+  }).join('')+'</tr>';
+  document.getElementById('tBody').innerHTML=rows.length===0
+    ?`<tr><td class="no-data" colspan="${headers.length+1}">ไม่พบข้อมูล</td></tr>`
+    :rows.map(r=>'<tr>'+`<td class="td-idx">${r._rowNum}</td>`+headers.map(h=>{const v=r[h]??'';if(h===ac){const n=parseFloat(String(v).replace(/,/g,''));return`<td class="td-amt">${!isNaN(n)?'฿'+fmt(n):v}</td>`;}return`<td>${v}</td>`;}).join('')+'</tr>').join('');
+  document.getElementById('rowCount').textContent=filteredRows.length.toLocaleString('th')+' รายการ'+(filteredRows.length>LIMIT?` (แสดง ${LIMIT})`:'');
+}
+function sortBy(col){sortSt={col,dir:sortSt.col===col?sortSt.dir*-1:1};applyFilter();}
+
+/* ── PERSON PICKER ── */
+function buildPersonPicker(){
+  const pc=gc('colPerson'); if(!pc)return;
+  const ps=[...new Set(allRows.map(r=>r[pc]).filter(Boolean))].sort();
+  // Single-view dropdown
+  const sOpts='<option value="">— เลือกเซลล์ที่ต้องการดู —</option>'+ps.map(p=>`<option value="${ex(p)}">${p}</option>`).join('');
+  document.getElementById('personSelect').innerHTML=sOpts;
+  // Compare add dropdown (exclude already-added)
+  const avail=ps.filter(p=>!compareList.includes(p));
+  const cOpts='<option value="">— เพิ่มเซลล์เพื่อเปรียบเทียบ —</option>'+avail.map(p=>`<option value="${ex(p)}">${p}</option>`).join('');
+  document.getElementById('cmpAddSel').innerHTML=cOpts;
+  renderCmpTags();
+}
+function renderCmpTags(){
+  const el=document.getElementById('cmpTagsList'); if(!el)return;
+  el.innerHTML=compareList.map(name=>`<span class="cmp-tag">${name}<button class="cmp-tag-x" onclick="removeCmpPerson('${ex(name)}')" title="ลบ">×</button></span>`).join('');
+}
+function addToCmpList(){
+  const sel=document.getElementById('cmpAddSel'); const name=sel.value; if(!name)return;
+  if(!compareList.includes(name))compareList.push(name);
+  buildPersonPicker();
+  document.getElementById('cmpActionRow').style.display=compareList.length>0?'block':'none';
+}
+function removeCmpPerson(name){
+  compareList=compareList.filter(p=>p!==name);
+  buildPersonPicker();
+  document.getElementById('cmpActionRow').style.display=compareList.length>0?'block':'none';
+}
+
+/* ── COMPARE MODE ── */
+function toggleCompare(){
+  compareMode=!compareMode;compareList=[];
+  document.getElementById('cmpToggle').classList.toggle('active',compareMode);
+  document.getElementById('singlePickRow').style.display=compareMode?'none':'block';
+  document.getElementById('multiPickRow').style.display=compareMode?'block':'none';
+  document.getElementById('cmpActionRow').style.display='none';
+  buildPersonPicker();
+}
+function clearCompare(){
+  compareList=[];compareMode=false;
+  document.getElementById('cmpToggle').classList.remove('active');
+  document.getElementById('singlePickRow').style.display='block';
+  document.getElementById('multiPickRow').style.display='none';
+  document.getElementById('cmpActionRow').style.display='none';
+  buildPersonPicker();
+}
+function showCompare(){
+  if(compareList.length<1)return;
+  document.getElementById('personalEmpty').style.display='none';
+  document.getElementById('personalView').style.display='none';
+  document.getElementById('compareView').style.display='block';
+  renderCompare();
+}
+function backToPicker(){
+  document.getElementById('compareView').style.display='none';
+  document.getElementById('personalEmpty').style.display='block';
+}
+
+/* ── RENDER COMPARE ── */
+function renderCompare(){
+  const cy=getActiveCycle(), ac=gc('colAmount'), dc=gc('colDate'), pc=gc('colPerson');
+  document.getElementById('cmpCycleLbl').textContent=cy.label;
+  document.getElementById('cmpChartSub').textContent=cy.label;
+
+  // Per-person data
+  const pData=compareList.map((name,pi)=>{
+    const myRows=allRows.filter(r=>{
+      const p=r[pc]?String(r[pc]).trim():'';
+      if(p!==name)return false;
+      return!dc||isInCycle(r,dc,cy);
+    });
+    const nums=ac?myRows.map(r=>parseFloat(String(r[ac]??'').replace(/,/g,''))).filter(n=>!isNaN(n)&&n>0):[];
+    const tot=nums.reduce((s,n)=>s+n,0), avg=nums.length?tot/nums.length:0, mx=nums.length?Math.max(...nums):0;
+    // daily breakdown
+    const byD={}, dtM2={};
+    myRows.forEach(r=>{let d=r[dc];if(!d)return;d=String(d).split('T')[0].substring(0,10);
+      const raw=r['_dt_'+dc]||tryParseDate(d);if(raw)dtM2[d]=raw.getTime();
+      const n=parseFloat(String(r[ac]??'').replace(/,/g,''));if(!isNaN(n))byD[d]=(byD[d]||0)+n;});
+    return{name,rows:myRows,nums,tot,avg,mx,byD,dtM2,color:CMP_COLORS[pi%CMP_COLORS.length],idx:pi};
+  });
+
+  // Rank within compareList
+  const ranked=[...pData].sort((a,b)=>b.tot-a.tot);
+  ranked.forEach((p,i)=>p.rank=i+1);
+
+  // Cards
+  const clsMap={0:'p0',1:'p1',2:'p2',3:'p3',4:'p4',5:'p5'};
+  document.getElementById('cmpGrid').innerHTML=pData.map(p=>`
+    <div class="cmp-card ${clsMap[p.idx%6]}">
+      <div class="cmp-header">
+        <span class="cmp-name">${p.name}</span>
+        <span class="cmp-rank-badge">#${p.rank}</span>
+      </div>
+      <div class="cmp-body">
+        <div class="cmp-total">฿${fmt(p.tot)}</div>
+        <div class="cmp-total-lbl">ยอดรวมรอบนี้</div>
+        <div class="cmp-stats">
+          <div class="cmp-stat"><div class="cmp-stat-val">${p.rows.length}</div><div class="cmp-stat-lbl">จำนวนรายการ</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val">฿${fmt(p.avg)}</div><div class="cmp-stat-lbl">เฉลี่ย/รายการ</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val">฿${fmt(p.mx)}</div><div class="cmp-stat-lbl">สูงสุด</div></div>
+          <div class="cmp-stat"><div class="cmp-stat-val" style="color:var(--pc)">#${p.rank}</div><div class="cmp-stat-lbl">อันดับ</div></div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Combined chart — sort by actual date epoch, not string
+  const allDatesSet=[...new Set(pData.flatMap(p=>Object.keys(p.byD)))];
+  const mergedDtM=Object.assign({},...pData.map(p=>p.dtM2||{}));
+  const allDates=allDatesSet.sort((a,b)=>(mergedDtM[a]||0)-(mergedDtM[b]||0));
+  const ctx=document.getElementById('cCmp').getContext('2d');
+  if(chCmp)chCmp.destroy();
+  chCmp=new Chart(ctx,{type:'line',data:{labels:allDates,datasets:pData.map(p=>({
+    label:p.name,data:allDates.map(d=>p.byD[d]||0),
+    borderColor:p.color,backgroundColor:p.color+'15',
+    fill:false,tension:.35,pointRadius:3,pointBackgroundColor:p.color,pointBorderColor:'#fff',pointBorderWidth:2
+  }))},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'IBM Plex Sans Thai',size:11},boxWidth:10,padding:16}},
+      tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ฿${fmt(c.parsed.y)}`}}},
+    scales:{x:{ticks:{color:'#9a9a9a',maxRotation:40,font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}},
+      y:{ticks:{color:'#9a9a9a',callback:v=>'฿'+fmt(v),font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}}}}});
+
+  // Summary table
+  document.getElementById('cmpTHead').innerHTML='<tr><th>#</th><th>ชื่อเซลล์</th><th>ยอดรวม</th><th>รายการ</th><th>เฉลี่ย/รายการ</th><th>สูงสุด</th></tr>';
+  document.getElementById('cmpTBody').innerHTML=ranked.map((p,i)=>`
+    <tr><td class="td-idx">${i+1}</td><td style="font-weight:600;color:${p.color}">${p.name}</td>
+    <td class="td-amt">฿${fmt(p.tot)}</td><td class="td-right">${p.rows.length}</td>
+    <td class="td-amt">฿${fmt(p.avg)}</td><td class="td-amt">฿${fmt(p.mx)}</td></tr>`).join('');
+}
+
+/* ── PERSONAL VIEW ── */
+function selectViewPerson(name){
+  viewingPerson=name;
+  document.getElementById('personalEmpty').style.display='none';
+  document.getElementById('compareView').style.display='none';
+  document.getElementById('personalView').style.display='block';
+  renderPersonal(name);
+}
+function deselectPerson(){
+  viewingPerson='';
+  document.getElementById('personalView').style.display='none';
+  document.getElementById('personalEmpty').style.display='block';
+  if(chPersonal){chPersonal.destroy();chPersonal=null;}
+}
+
+function renderPersonal(name){
+  const pc=gc('colPerson'),ac=gc('colAmount'),dc=gc('colDate');
+  const cy=getActiveCycle();
+  const myRows=allRows.filter(r=>{const p=r[pc]?String(r[pc]).trim():'';return p===name&&(!dc||isInCycle(r,dc,cy));});
+  // Leaderboard: all persons in this cycle
+  const lbByP={};
+  allRows.forEach(r=>{
+    if(dc&&!isInCycle(r,dc,cy))return;
+    const p=r[pc]?String(r[pc]).trim():'(ไม่ระบุ)';
+    const n=parseFloat(String(r[ac]??'').replace(/,/g,''));
+    if(!isNaN(n))lbByP[p]=(lbByP[p]||0)+n;
+  });
+  const lb=Object.entries(lbByP).sort((a,b)=>b[1]-a[1]);
+  const rank=lb.findIndex(([k])=>k===name)+1;
+  const myTotal=ac?lb.find(([k])=>k===name)?.[1]??0:0;
+  const nums=ac?myRows.map(r=>parseFloat(String(r[ac]??'').replace(/,/g,''))).filter(n=>!isNaN(n)&&n>0):[];
+  const myAvg=nums.length?myTotal/nums.length:0, myMax=nums.length?Math.max(...nums):0;
+
+  // Hero
+  document.getElementById('heroCard').innerHTML=`
+    <div class="hero-left">
+      <div class="hero-tag"><svg width="11" height="11"><use href="#ico-user"/></svg>${cy.cycleName}</div>
+      <div class="hero-name">${name}</div><div class="hero-cycle">${cy.label}</div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-amt-lbl">ยอดรวมรอบนี้</div>
+      <div class="hero-amt">${ac?'฿'+fmt(myTotal):'—'}</div>
+      ${rank>0?`<div class="hero-rank"><svg width="12" height="12"><use href="#ico-trophy"/></svg>อันดับ ${rank} / ${lb.length} คน</div>`:''}
+    </div>`;
+
+  // pkpi
+  const pcs=[
+    {ico:'ico-list',  bg:'var(--bbg)',  clr:'var(--blue)',  val:myRows.length.toString(), lbl:'รายการในรอบนี้'},
+    {ico:'ico-avg',   bg:'var(--abg)',  clr:'var(--amber)', val:ac?'฿'+fmt(myAvg):'—',   lbl:'ยอดเฉลี่ย'},
+    {ico:'ico-bolt',  bg:'var(--pbg)',  clr:'var(--purple)',val:ac?'฿'+fmt(myMax):'—',   lbl:'ยอดสูงสุด'},
+    {ico:'ico-medal', bg:'var(--rs)',   clr:'var(--red)',   val:rank>0?`#${rank}`:'—',   lbl:`จาก ${lb.length} คน`},
+  ];
+  document.getElementById('pkpiGrid').innerHTML=pcs.map(c=>`<div class="kpi"><div class="kpi-icon-wrap" style="background:${c.bg};color:${c.clr}"><svg width="18" height="18"><use href="#${c.ico}"/></svg></div><div class="kpi-val">${c.val}</div><div class="kpi-lbl">${c.lbl}</div></div>`).join('');
+
+  // Personal chart
+  document.getElementById('pChartTitle').textContent=`ยอดรายวัน · ${name}`;
+  document.getElementById('pChartSub').textContent=cy.label;
+  if(dc){
+    const byD={}, dtM={};
+    myRows.forEach(r=>{let d=r[dc];if(!d)return;d=String(d).split('T')[0].substring(0,10);
+      const raw=r['_dt_'+dc]||tryParseDate(d);if(raw)dtM[d]=raw.getTime();
+      const n=parseFloat(String(r[ac]??'').replace(/,/g,''));if(!isNaN(n))byD[d]=(byD[d]||0)+n;});
+    const dl=Object.keys(byD).sort((a,b)=>(dtM[a]||0)-(dtM[b]||0)), dd=dl.map(l=>byD[l]);
+    const ctx=document.getElementById('cPersonal').getContext('2d');
+    if(chPersonal)chPersonal.destroy();
+    chPersonal=new Chart(ctx,{type:'bar',data:{labels:dl,datasets:[{data:dd,backgroundColor:'rgba(179,27,27,.72)',borderColor:'#B31B1B',borderWidth:1.5,borderRadius:6}]},
+      options:{...CO,plugins:{...CO.plugins,tooltip:{callbacks:{label:c=>' ฿'+fmt(c.parsed.y)}}},
+      scales:{x:{ticks:{color:'#9a9a9a',maxRotation:40,font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}},y:{ticks:{color:'#9a9a9a',callback:v=>'฿'+fmt(v),font:{family:'IBM Plex Sans Thai',size:10}},grid:{color:'#F0F0F0'}}}}});
+  }
+
+  // Leaderboard
+  const maxLb=lb[0]?.[1]||1;
+  document.getElementById('lbSub').textContent=cy.label;
+  document.getElementById('lbList').innerHTML=lb.map(([p,amt],i)=>{
+    const isMe=p===name;
+    const rCls=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    return`<div class="lb-row${isMe?' me':''}"><div class="lb-rank ${rCls}">${i+1}</div><div class="lb-name${isMe?' me-name':''}">${p}</div><div class="lb-bar-wrap"><div class="lb-bar${isMe?' me-bar':''}" style="width:${(amt/maxLb)*100}%"></div></div><div class="lb-amt">฿${fmt(amt)}</div></div>`;
+  }).join('');
+
+  // Table
+  document.getElementById('pTblTitle').textContent=`รายการของ ${name}`;
+  document.getElementById('pRowCount').textContent=myRows.length.toLocaleString('th')+' รายการ';
+  const vh=headers.filter(h=>!h.startsWith('_'));
+  document.getElementById('pTHead').innerHTML='<tr><th>#</th>'+vh.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  document.getElementById('pTBody').innerHTML=myRows.length===0
+    ?`<tr><td class="no-data" colspan="${vh.length+1}">ไม่มีรายการในรอบนี้</td></tr>`
+    :myRows.map((r,i)=>'<tr>'+`<td class="td-idx">${r._rowNum}</td>`+vh.map(h=>{const v=r[h]??'';if(h===ac){const n=parseFloat(String(v).replace(/,/g,''));return`<td class="td-amt">${!isNaN(n)?'฿'+fmt(n):v}</td>`;}return`<td>${v}</td>`;}).join('')+'</tr>').join('');
+}
+
+/* ── TABS ── */
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c=>c.style.display='none');
+  document.getElementById('tab-'+name).style.display='block';
+}
+
+/* ── MODAL ── */
+function openModal(){document.getElementById('modalBg').classList.add('open');}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+
+/* ── UTILS ── */
+function fmt(n){return Number(n).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function ex(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,"\\'").replace(/</g,'&lt;');}
+
+function showState(s,msg=''){
+  const box=document.getElementById('stateBox');
+  const ov=document.getElementById('tab-overview'), pe=document.getElementById('tab-personal');
+  if(s==='loading'){
+    box.innerHTML=`<div class="spinner"></div><div class="state-title">กำลังโหลดข้อมูลทั้งหมด…</div><div class="state-sub">โหลดทุก row เพื่อดูย้อนหลังได้ครบ</div>`;
+    box.style.display='flex';ov.style.display='none';pe.style.display='none';
+  }else if(s==='ready'){
+    box.style.display='none';
+    const active=document.querySelector('.tab-btn.active');
+    const which=active?.textContent.includes('Overview')?'overview':'personal';
+    document.getElementById('tab-'+which).style.display='block';
+  }else{
+    box.innerHTML=`<div class="person-empty-icon" style="margin-bottom:0"><svg width="28" height="28"><use href="#ico-bolt"/></svg></div>
+      <div class="state-title" style="color:var(--red)">โหลดข้อมูลไม่สำเร็จ</div>
+      <div class="state-sub">${msg}</div>
+      <div class="state-sub" style="margin-top:6px">ตรวจสอบว่า Sheet เป็น <b>Anyone with the link → Viewer</b></div>
+      <button onclick="forceRefresh()" class="btn-red" style="margin-top:12px">ลองอีกครั้ง</button>`;
+    box.style.display='flex';
+  }
+}
+function updateTs(){const el=document.getElementById('tsPill');el.style.display='block';el.textContent='อัพเดต '+new Date().toLocaleTimeString('th-TH');}
+function resetCd(){clearInterval(countID);cd=REFRESH/1000;countID=setInterval(()=>{cd--;document.getElementById('timerPill').textContent=cd+' วิ';if(cd<=0)cd=REFRESH/1000;},1000);}
+function forceRefresh(){clearInterval(timerID);allRows=[];loadData().then(()=>{timerID=setInterval(loadData,REFRESH);});}
+
+/* ── BOOT ── */
+renderCycleBanner();
+loadData();
+timerID=setInterval(loadData,REFRESH);
+</script>
+</body>
+</html>
